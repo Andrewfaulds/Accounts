@@ -27,9 +27,7 @@ class UsersController extends Controller
     public function index(Index $request)
     : ResourceCollection
     {
-        $users = User::all();
-
-        dd($users);
+        $users = User::paginate();
 
         return (new ResourceCollection($users));
     }
@@ -86,8 +84,8 @@ class UsersController extends Controller
         $validated = $request->validated();
 
         $user->update([
-            'name'  => $validated['name'],
-            'email' => $validated['email'],
+            'name'  => $validated['name'] ?? $user->name,
+            'email' => $validated['email'] ?? $user->email,
         ]);
 
         UserUpdatedEvent::dispatch($user);
@@ -99,22 +97,18 @@ class UsersController extends Controller
      * Delete an existing resource in storage.
      *
      * @param \App\Http\Requests\Users\Destroy $request
-     * @param \App\Models\User                $user
+     * @param \App\Models\User                 $user
      *
-     * @return \Illuminate\Http\Response
-     * @throws \Exception
      */
-    public function delete(Destroy $request, User $user)
+    public function destroy(Destroy $request, User $user)
     : \Illuminate\Http\Response
     {
         $userId = $user->id;
 
         $user->delete();
 
-        if(!$user){
-            UserDeletedEvent::dispatch($userId);
+        UserDeletedEvent::dispatch($userId);
 
-            return response()->noContent();
-        }
+        return response()->noContent();
     }
 }

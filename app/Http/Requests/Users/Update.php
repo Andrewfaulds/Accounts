@@ -26,8 +26,8 @@ class Update extends FormRequest
     : array
     {
         return [
-            'name'  => 'required|string|max:255',
-            'email' => 'required|email',
+            'name'  => 'string|max:255',
+            'email' => 'email',
         ];
     }
 }

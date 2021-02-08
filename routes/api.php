@@ -27,5 +27,5 @@ Route::apiResource('users', Controllers\UsersController::class)
          'store',
          'show',
          'update',
-         'delete',
+         'destroy',
      ]);
