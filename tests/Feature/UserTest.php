@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Events\UserCreatedEvent;
+use App\Events\UserDeletedEvent;
 use App\Events\UserUpdatedEvent;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,7 +89,7 @@ class UserTest extends TestCase
 
         $this->expectsEvents(UserUpdatedEvent::class);
 
-        $response = $this->json('PUT', '/api/users/' .$initialUser->id, $attributes);
+        $response = $this->json('PUT', '/api/users/' . $initialUser->id, $attributes);
 
         $response->assertStatus(200);
 
@@ -128,8 +129,65 @@ class UserTest extends TestCase
 
         $this->doesntExpectEvents(UserUpdatedEvent::class);
 
-        $response = $this->json('PUT', '/api/users/'.$initialUser->id , $attributes);
+        $response = $this->json('PUT', '/api/users/' . $initialUser->id, $attributes);
 
         $response->assertStatus(422);
+    }
+
+    /**
+     * Test creates an existing user then deletes that user.
+     *
+     * @test
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function deletes_an_existing_user()
+    {
+        $initialUser = new User([
+            "name"  => "initial name",
+            "email" => "initial@email.com",
+        ]);
+
+        $initialUser->save();
+
+        $this->expectsEvents(UserDeletedEvent::class);
+
+        $response = $this->json('DELETE', '/api/users/' . $initialUser->id);
+
+        $response->assertStatus(204);
+
+        $user = User::all()
+                    ->find($initialUser->id);
+
+        $this->assertNull($user);
+    }
+
+    /**
+     * Test fails to delete a user that has already been deleted.
+     *
+     * @test
+     *
+     * @return void
+     * @throws \Exception
+     */
+    public function fails_to_delete_a_user()
+    {
+        $initialUser = new User([
+            "name"  => "initial name",
+            "email" => "initial@email.com",
+        ]);
+
+        $initialUser->save();
+
+        $userId = $initialUser->id;
+
+        $initialUser->delete();
+
+        $this->doesntExpectEvents(UserDeletedEvent::class);
+
+        $response = $this->json('DELETE', '/api/users/' . $userId);
+
+        $response->assertStatus(404);
     }
 }
